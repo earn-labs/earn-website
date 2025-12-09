@@ -62,6 +62,10 @@ export default function Introduction({ }: Props) {
                 text="0x0b61C4f33BCdEF83359ab97673Cb5961c6435F4E"
                 copyText="0x0b61C4f33BCdEF83359ab97673Cb5961c6435F4E"
               />
+              <div className='text-primary text-sm gap-2 my-2'><div>NOW ON MONAD:</div><CopyToClipboard
+                text="0x3dB619ff72D877490699276061FB0Fa0618FDf47"
+                copyText="0x3dB619ff72D877490699276061FB0Fa0618FDf47"
+              /></div>
               <div className='flex gap-5 flex-wrap pt-4'>
                 <ChartButton url="https://www.coingecko.com/en/coins/hold-2"></ChartButton>
                 <CustomButton url="https://flames.buyholdearn.com/" name="Flames"></CustomButton>
