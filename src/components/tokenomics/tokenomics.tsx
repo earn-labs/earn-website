@@ -1,43 +1,87 @@
 "use client";
-import React from 'react';
+import React, { useEffect } from 'react';
 import Image from 'next/image';
 import ReflectionChecker from '../reflectionChecker/reflectionChecker';
 
 
-import {useContractReads} from "wagmi";
-import {abi} from "../../assets/tokenABI";
-import {useState} from "react";
-import {formatEther} from "viem";
+import { useContractReads } from "wagmi";
+import { abi } from "../../assets/tokenABI";
+import { useState } from "react";
+import { formatEther } from "viem";
 
 const TOKEN_CONTRACT = "0x0b61C4f33BCdEF83359ab97673Cb5961c6435F4E";
 
 type Props = {};
 const tokenContract = {
-    address: TOKEN_CONTRACT as `0x${ string }`,
+    address: TOKEN_CONTRACT as `0x${string}`,
     abi: abi,
 };
-export default function Tokenomics({}: Props) {
+export default function Tokenomics({ }: Props) {
     const [burnBalance, setBurnBalance] = useState<number | null>(null);
     const [totalReflections, setTotalReflections] = useState<number | null>(null);
+    const [isLoading, setLoading] = useState<boolean>(false);
+    const [error, setError] = useState<string | null>(null);
 
-    const {data, isError, isLoading} = useContractReads({
-        contracts: [
-            {
-                ...tokenContract,
-                functionName: "totalFees",
-            },
-            {
-                ...tokenContract,
-                functionName: "balanceOf",
-                args: ["0x000000000000000000000000000000000000dEaD"],
-            },
-        ],
-        watch: true,
-        onSuccess(data) {
-            setTotalReflections(data[0].result ? Math.round(Number(formatEther(data[0].result))) : null);
-            setBurnBalance(data[1].result ? Math.round(Number(formatEther(data[1].result))) : null);
-        },
-    });
+    async function fetchTotalBurn() {
+
+        setLoading(true);
+        setError(null);
+
+        try {
+            const response = await fetch(`/api/total-burned`);
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to fetch total burned');
+            }
+
+            const data: { totalBurned: number } = await response.json();
+            console.log("Fetched total burned:", data.totalBurned);
+            setBurnBalance(data.totalBurned);
+        } catch (err) {
+            console.error('Error fetching total burned:', err);
+            setError(err instanceof Error ? err.message : 'Failed to fetch total burned');
+            setBurnBalance(null);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    async function fetchTotalFees() {
+
+        setLoading(true);
+        setError(null);
+
+        try {
+            const response = await fetch(`/api/total-reflections`);
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to fetch total fees');
+            }
+
+            const data: { totalReflections: number } = await response.json();
+            console.log("Fetched total reflections:", data.totalReflections);
+            setTotalReflections(data.totalReflections);
+        } catch (err) {
+            console.error('Error fetching reflections:', err);
+            setError(err instanceof Error ? err.message : 'Failed to fetch reflections');
+            setTotalReflections(null);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    useEffect(() => {
+
+
+        const timeoutId = setTimeout(() => {
+            fetchTotalFees();
+            fetchTotalBurn();
+        }, 500);
+
+        return () => clearTimeout(timeoutId);
+    }, []);
 
     const [copied, setCopied] = useState<boolean>(false);
 
@@ -67,7 +111,7 @@ export default function Tokenomics({}: Props) {
                         src="/featured_image.jpg"
                         width={605}
                         height={658}
-                        style={{width: "250px", height: "auto"}}
+                        style={{ width: "250px", height: "auto" }}
                         alt="flame"
 
                     />
@@ -96,11 +140,11 @@ export default function Tokenomics({}: Props) {
                                 <h1 className='text-gray-300'>Reflections:</h1><h1 className='font-bold'>2%</h1>
                             </div>
                             <div className="h-16 flex items-center gap-5 rounded-md border-l-2 border-primary bg-white/5 backdrop-blur px-5 w-full">
-                                <h1 className='text-gray-300 leading-5'>Total Burned:</h1><h1 className='font-bold leading-5'>{`${ isLoading || burnBalance == null ? "Loading..." : burnBalance?.toLocaleString()
+                                <h1 className='text-gray-300 leading-5'>Total Burned:</h1><h1 className='font-bold leading-5'>{`${isLoading || burnBalance == null ? "Loading..." : burnBalance?.toLocaleString()
                                     } EARN`}</h1>
                             </div>
                             <div className="h-16 flex items-center gap-5 rounded-md border-l-2 border-primary bg-white/5 backdrop-blur px-5 w-full">
-                                <h1 className='text-gray-300 leading-5'>Total Reflections:</h1><h1 className='font-bold leading-5'>{`${ isLoading || totalReflections == null ? "Loading..." : totalReflections.toLocaleString()
+                                <h1 className='text-gray-300 leading-5'>Total Reflections:</h1><h1 className='font-bold leading-5'>{`${isLoading || totalReflections == null ? "Loading..." : totalReflections.toLocaleString()
                                     } EARN`}</h1>
                             </div>
 
